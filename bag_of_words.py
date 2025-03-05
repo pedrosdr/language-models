@@ -49,14 +49,9 @@ df = pd.DataFrame({
     "class": [0, 0, 0, 1, 1, 1, 2, 2, 2, 2]
 })
 
-# Creating the matrices x and y
+# Creating the inputs and targets
 x = dtm
-
-# Matrix y must be a dummy (one hot encoded)
-y = torch.tensor(
-    pd.get_dummies(df["class"], dtype="float32").to_numpy(), 
-    dtype=torch.float32
-)
+y = torch.tensor(df["class"].to_numpy(), dtype=torch.long)
 
 
 # Creating the model
@@ -66,7 +61,7 @@ class Model(nn.Module):
         
         self.linear1 = nn.Linear(x.size()[1], 100)
         self.linear2 = nn.Linear(100, 100)
-        self.linear3 = nn.Linear(100, y.size()[1])
+        self.linear3 = nn.Linear(100, 3)
         
     def forward(self, x):
         x = self.linear1(x)
@@ -78,7 +73,6 @@ class Model(nn.Module):
         x = f.dropout(x, 0.2)
         
         x = self.linear3(x)
-        x = f.softmax(x, dim=1)
         return x
     
     
@@ -91,7 +85,7 @@ criterion = nn.CrossEntropyLoss()
 for i in range(100):
     
     ypred = model(x)
-    loss = criterion(y, ypred)
+    loss = criterion(ypred, y)
     
     optimizer.zero_grad()
     loss.backward()
@@ -101,17 +95,5 @@ for i in range(100):
 
 # Evaluating
 ypred = model(x)
-print(y.argmax(dim=1))
+print(y)
 print(ypred.argmax(dim=1))
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
