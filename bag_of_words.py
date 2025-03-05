@@ -3,7 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as f
 import numpy as np
 import pandas as pd
+import re
 
+# Setting a seed for reproducibility
+torch.manual_seed(1)
 
 # Creating the corpus
 corpus = np.array([
@@ -19,28 +22,35 @@ corpus = np.array([
     "Listen to folk music"
 ])
 
-# Extracting the vocabulary
-vocabulary = np.array(
-    " ".join([doc.strip() for doc in corpus]).lower().split(" ")
-)
-vocabulary = np.unique(vocabulary)
-vocabulary = np.sort(vocabulary)
+# Defining a function that extracts the tokens from a string
+def tokenize(text):
+    return [token.lower() for token in re.findall("\w+", text)]
+
+# Defining a function for extracting the vocabulary from a corpus
+def get_vocabulary(corpus):
+    vocabulary = [token for text in corpus for token in tokenize(text)]
+    vocabulary = list(set(vocabulary))
+    vocabulary = sorted(vocabulary)
+    return vocabulary
+
+# Defining a function that creates a document-term matrix
+def get_DTM(corpus):
+    lst = []
+    for doc in corpus:
+        
+        lsti = []
+        for token in get_vocabulary(corpus):
+            if token in tokenize(doc):
+                lsti.append(1.0)
+            else:
+                lsti.append(0.0)
+        
+        lst.append(lsti)
+    return torch.tensor(lst, dtype=torch.float32)
+    
 
 # Creating the document-term matrix
-lst = []
-for doc in corpus:
-    doc = doc.lower()
-    
-    lsti = []
-    for token in vocabulary:
-        if token in doc.split(" "):
-            lsti.append(1.0)
-        else:
-            lsti.append(0.0)
-    
-    lst.append(lsti)
-    
-dtm = torch.tensor(lst, dtype=torch.float32)
+dtm = get_DTM(corpus)
 print(dtm)
 
 # Labeling the documents (0: cinema, 1: science, 2: music)
@@ -94,6 +104,7 @@ for i in range(100):
     print(f"epoch: {i}, loss: {loss.item()}")
 
 # Evaluating
-ypred = model(x)
-print(y)
-print(ypred.argmax(dim=1))
+with torch.no_grad():
+    ypred = model(x)
+    print(y)
+    print(ypred.argmax(dim=1))
