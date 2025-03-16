@@ -22,6 +22,25 @@ import torch.optim as optim
 # Import PCA from sklearn for dimensionality reduction of the learned embeddings
 from sklearn.decomposition import PCA
 
+def set_seed(seed: int = 1):
+    """
+    Set the random seed for NumPy and PyTorch (both CPU and GPU)
+    to ensure that experiments are reproducible.
+    
+    Parameters:
+    seed (int): The seed value to be used for all random number generators.
+    """
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+# Call the function to set the seed for reproducibility.
+set_seed(42)
+
 # Define a corpus of sentences covering various topics (nature, travel, pets, etc.)
 corpus = [
     "I like reading books in the early morning, while the sun rises and the gentle rain taps on my window.",
@@ -272,7 +291,7 @@ with torch.no_grad():
     embedding_vectors = embedding_layer(encoded_vocabulary).detach().to(cpu).numpy()
 
     # Use PCA to reduce the 10-dimensional embedding vectors to 2 dimensions for visualization
-    pca = PCA(n_components=2)
+    pca = PCA(n_components=2, random_state=1)
     decomposed_vectors = pca.fit_transform(embedding_vectors)
     
     # Create an interactive scatter plot of the 2D embeddings using Plotly.
